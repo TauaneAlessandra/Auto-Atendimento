@@ -1,0 +1,45 @@
+# Dependências
+node_modules/
+*/node_modules/
+
+# Build
+dist/
+build/
+*/dist/
+*/build/
+
+# Banco de dados SQLite
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+backend/prisma/migrations/
+
+# Variáveis de ambiente (contém segredos)
+.env
+*/.env
+
+# Uploads de usuário
+backend/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript
+*.tsbuildinfo
