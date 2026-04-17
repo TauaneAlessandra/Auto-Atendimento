@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
 import path from 'path';
 import dotenv from 'dotenv';
 import { globalLimiter } from './middlewares/limiter.middleware';
@@ -11,14 +13,28 @@ dotenv.config();
 
 const app = express();
 
-// Middlewares globais
+// Cabeçalhos de segurança HTTP
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+
+app.use(compression());
+
+// CORS
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+
+// Rate limiting global
 app.use(globalLimiter);
+
+// Body parsing
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-// Servir arquivos de upload
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Servir arquivos de upload com cabeçalhos seguros
+app.use('/uploads', (_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+}, express.static(path.join(__dirname, '../uploads')));
 
 // Health check
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
@@ -30,9 +46,9 @@ app.use('/api', routes);
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = Number(process.env.PORT) || 3001;
+const PORT = parseInt(process.env.PORT ?? '3001', 10);
 app.listen(PORT, () => {
-  console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
 
 export default app;

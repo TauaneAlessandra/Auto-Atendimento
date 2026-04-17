@@ -51,7 +51,7 @@ export default function ProductCatalog({
               </div>
               
               <div className="flex-1 min-w-0">
-                <p className="text-[9px] font-black text-blue-500 uppercase tracking-[0.1em] mb-1">{p.serviceType.name}</p>
+                <p className="text-[9px] font-black text-blue-500 uppercase tracking-[0.1em] mb-1">{p.category.name}</p>
                 <h3 className="font-extrabold text-slate-900 leading-tight mb-1 truncate text-base">{p.name}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-900 font-bold text-lg">R$ {p.price.toFixed(2)}</span>

@@ -16,7 +16,7 @@ async function main() {
         role: 'admin',
       },
     });
-    console.log('✅ Admin criado: admin@admin.com / admin123');
+    console.log('✅ Admin criado com sucesso');
   }
 
   const utencilios = await prisma.category.upsert({ where: { name: 'Utencílios Domésticos' }, update: {}, create: { name: 'Utencílios Domésticos' } });
@@ -24,7 +24,7 @@ async function main() {
   const papelaria = await prisma.category.upsert({ where: { name: 'Papelaria' }, update: {}, create: { name: 'Papelaria' } });
 
   const un = await prisma.unit.upsert({ where: { name: 'Unidade' }, update: {}, create: { name: 'Unidade' } });
-  const pct = await prisma.unit.upsert({ where: { name: 'Pacote' }, update: {}, create: { name: 'Pacote' } });
+  await prisma.unit.upsert({ where: { name: 'Pacote' }, update: {}, create: { name: 'Pacote' } });
   const conj = await prisma.unit.upsert({ where: { name: 'Conjunto' }, update: {}, create: { name: 'Conjunto' } });
 
   const pCount = await prisma.product.count();

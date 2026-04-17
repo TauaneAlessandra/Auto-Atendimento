@@ -4,6 +4,6 @@ import { authenticate, requireAdmin } from '../../middlewares/auth.middleware';
 
 const router = Router();
 
-router.get('/stats', authenticate, requireAdmin as any, getStats);
+router.get('/stats', authenticate, requireAdmin, getStats);
 
 export default router;

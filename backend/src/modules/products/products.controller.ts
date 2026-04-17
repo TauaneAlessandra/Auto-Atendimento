@@ -1,14 +1,12 @@
 import { Request, Response } from 'express';
-import prisma from '../../config/database';
-import fs from 'fs';
-import path from 'path';
+import { ProductsService } from './products.service';
+import { validateBody, createProductSchema } from '../../lib/validation';
 
-const INCLUDE_RELATIONS = { category: true, unit: true };
-
-export const listProducts = async (_req: Request, res: Response): Promise<void> => {
+export const listProducts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const products = await prisma.product.findMany({ include: INCLUDE_RELATIONS, orderBy: { name: 'asc' } });
-    res.json(products);
+    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 50));
+    res.json(await ProductsService.findAll(page, limit));
   } catch (error) {
     console.error('[products.listProducts]', error);
     res.status(500).json({ message: 'Erro ao listar produtos' });
@@ -17,12 +15,7 @@ export const listProducts = async (_req: Request, res: Response): Promise<void> 
 
 export const listActiveProducts = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const products = await prisma.product.findMany({
-      where: { active: true },
-      include: INCLUDE_RELATIONS,
-      orderBy: { name: 'asc' },
-    });
-    res.json(products);
+    res.json(await ProductsService.findActive());
   } catch (error) {
     console.error('[products.listActiveProducts]', error);
     res.status(500).json({ message: 'Erro ao listar produtos' });
@@ -31,18 +24,16 @@ export const listActiveProducts = async (_req: Request, res: Response): Promise<
 
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, price, categoryId, description, unitId, minQty, maxQty } = req.body;
+    const data = validateBody(createProductSchema, req.body);
     const photo = (req.file as Express.Multer.File | undefined)?.filename ?? null;
-    if (!name || !price || !categoryId || !description || !unitId || !minQty || !maxQty) {
-      res.status(400).json({ message: 'Preencha todos os campos obrigatórios' });
-      return;
-    }
-    const product = await prisma.product.create({
-      data: { name, price: Number(price), categoryId: Number(categoryId), description, unitId: Number(unitId), minQty: Number(minQty), maxQty: Number(maxQty), photo },
-      include: INCLUDE_RELATIONS,
-    });
+    const product = await ProductsService.create({ ...data, photo });
     res.status(201).json(product);
   } catch (error) {
+    const err = error as Error & { statusCode?: number };
+    if (err.statusCode === 400) {
+      res.status(400).json({ message: err.message });
+      return;
+    }
     console.error('[products.createProduct]', error);
     res.status(500).json({ message: 'Erro ao criar produto' });
   }
@@ -50,8 +41,12 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const { name, price, categoryId, description, unitId, minQty, maxQty, active } = req.body;
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id) || id <= 0) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+    const { name, price, categoryId, description, unitId, minQty, maxQty, active } = req.body as Record<string, string | boolean | undefined>;
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;
     if (price !== undefined) data.price = Number(price);
@@ -61,17 +56,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     if (minQty !== undefined) data.minQty = Number(minQty);
     if (maxQty !== undefined) data.maxQty = Number(maxQty);
     if (active !== undefined) data.active = active === 'true' || active === true;
-
-    if (req.file) {
-      const old = await prisma.product.findUnique({ where: { id: Number(id) } });
-      if (old?.photo) {
-        const oldPath = path.join(__dirname, '../../../uploads', old.photo);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      }
-      data.photo = req.file.filename;
-    }
-
-    const product = await prisma.product.update({ where: { id: Number(id) }, data, include: INCLUDE_RELATIONS });
+    const product = await ProductsService.update(id, data, req.file?.filename);
     res.json(product);
   } catch (error) {
     console.error('[products.updateProduct]', error);
@@ -81,8 +66,12 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 
 export const removeProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    await prisma.product.update({ where: { id: Number(id) }, data: { active: false } });
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id) || id <= 0) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+    await ProductsService.deactivate(id);
     res.json({ message: 'Produto desativado com sucesso' });
   } catch (error) {
     console.error('[products.removeProduct]', error);

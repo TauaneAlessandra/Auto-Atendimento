@@ -6,9 +6,9 @@ import { upload } from '../../middlewares/upload.middleware';
 const router = Router();
 
 router.get('/public', listActiveProducts);
-router.get('/', authenticate, requireAdmin as any, listProducts);
-router.post('/', authenticate, requireAdmin as any, upload.single('photo'), createProduct);
-router.put('/:id', authenticate, requireAdmin as any, upload.single('photo'), updateProduct);
-router.delete('/:id', authenticate, requireAdmin as any, removeProduct);
+router.get('/', authenticate, requireAdmin, listProducts);
+router.post('/', authenticate, requireAdmin, upload.single('photo'), createProduct);
+router.put('/:id', authenticate, requireAdmin, upload.single('photo'), updateProduct);
+router.delete('/:id', authenticate, requireAdmin, removeProduct);
 
 export default router;

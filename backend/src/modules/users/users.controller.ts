@@ -1,13 +1,10 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import prisma from '../../config/database';
-
-const SELECT_FIELDS = { id: true, name: true, email: true, role: true, active: true, createdAt: true };
+import { UsersService } from './users.service';
+import { validateBody, createUserSchema, updateUserSchema } from '../../lib/validation';
 
 export const listUsers = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const users = await prisma.user.findMany({ select: SELECT_FIELDS, orderBy: { createdAt: 'desc' } });
-    res.json(users);
+    res.json(await UsersService.findAll());
   } catch (error) {
     console.error('[users.listUsers]', error);
     res.status(500).json({ message: 'Erro ao listar usuários' });
@@ -16,17 +13,21 @@ export const listUsers = async (_req: Request, res: Response): Promise<void> => 
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
-    if (!name || !email || !password || !role) {
-      res.status(400).json({ message: 'Todos os campos são obrigatórios' });
-      return;
-    }
-    const exists = await prisma.user.findUnique({ where: { email } });
-    if (exists) { res.status(400).json({ message: 'Email já cadastrado' }); return; }
-    const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hashed, role }, select: SELECT_FIELDS });
+    const data = validateBody(createUserSchema, req.body);
+    const user = await UsersService.create(data);
     res.status(201).json(user);
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'EMAIL_TAKEN') {
+        res.status(400).json({ message: 'Email já cadastrado' });
+        return;
+      }
+      const err = error as Error & { statusCode?: number };
+      if (err.statusCode === 400) {
+        res.status(400).json({ message: err.message });
+        return;
+      }
+    }
     console.error('[users.createUser]', error);
     res.status(500).json({ message: 'Erro ao criar usuário' });
   }
@@ -34,17 +35,20 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const { name, email, password, role, active } = req.body;
-    const data: Record<string, unknown> = {};
-    if (name !== undefined) data.name = name;
-    if (email !== undefined) data.email = email;
-    if (role !== undefined) data.role = role;
-    if (active !== undefined) data.active = active;
-    if (password) data.password = await bcrypt.hash(password, 10);
-    const user = await prisma.user.update({ where: { id: Number(id) }, data, select: SELECT_FIELDS });
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id) || id <= 0) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+    const data = validateBody(updateUserSchema, req.body);
+    const user = await UsersService.update(id, data);
     res.json(user);
   } catch (error) {
+    const err = error as Error & { statusCode?: number };
+    if (err.statusCode === 400) {
+      res.status(400).json({ message: err.message });
+      return;
+    }
     console.error('[users.updateUser]', error);
     res.status(500).json({ message: 'Erro ao atualizar usuário' });
   }
@@ -52,8 +56,12 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
 export const removeUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    await prisma.user.update({ where: { id: Number(id) }, data: { active: false } });
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id) || id <= 0) {
+      res.status(400).json({ message: 'ID inválido' });
+      return;
+    }
+    await UsersService.deactivate(id);
     res.json({ message: 'Usuário desativado com sucesso' });
   } catch (error) {
     console.error('[users.removeUser]', error);

@@ -12,14 +12,8 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     res.status(401).json({ message: 'Token não fornecido' });
     return;
   }
-  
+
   const token = authHeader.split(' ')[1];
-  
-  // ── MOCK BYPASS (Temporário p/ Desenvolvimento) ──
-  if (token === 'mock-token') {
-    req.user = { id: 1, email: 'admin@mock.com', role: 'admin' };
-    return next();
-  }
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as { id: number; email: string; role: string };
@@ -30,8 +24,10 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 };
 
-export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.user?.role !== 'admin') {
+// Aceita Request para compatibilidade com Express RequestHandler sem cast
+export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  const authReq = req as AuthRequest;
+  if (authReq.user?.role !== 'admin') {
     res.status(403).json({ message: 'Acesso restrito ao administrador' });
     return;
   }

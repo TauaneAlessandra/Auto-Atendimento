@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import prisma from '../../config/database';
+import { UnitsService } from './units.service';
 
 export const listUnits = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const units = await prisma.unit.findMany({ orderBy: { name: 'asc' } });
-    res.json(units);
+    res.json(await UnitsService.findAll());
   } catch {
     res.status(500).json({ message: 'Erro ao listar unidades' });
   }
@@ -14,23 +13,20 @@ export const createUnit = async (req: Request, res: Response): Promise<void> => 
   try {
     const { name } = req.body;
     if (!name) { res.status(400).json({ message: 'Nome é obrigatório' }); return; }
-    const exists = await prisma.unit.findUnique({ where: { name } });
-    if (exists) { res.status(400).json({ message: 'Unidade já cadastrada' }); return; }
-    const unit = await prisma.unit.create({ data: { name } });
+    const unit = await UnitsService.create(name);
     res.status(201).json(unit);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === 'UNIT_EXISTS') {
+      res.status(400).json({ message: 'Unidade já cadastrada' });
+      return;
+    }
     res.status(500).json({ message: 'Erro ao criar unidade' });
   }
 };
 
 export const updateUnit = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const { name, active } = req.body;
-    const data: Record<string, unknown> = {};
-    if (name !== undefined) data.name = name;
-    if (active !== undefined) data.active = active;
-    const unit = await prisma.unit.update({ where: { id: Number(id) }, data });
+    const unit = await UnitsService.update(Number(req.params.id), req.body);
     res.json(unit);
   } catch {
     res.status(500).json({ message: 'Erro ao atualizar unidade' });
@@ -39,8 +35,7 @@ export const updateUnit = async (req: Request, res: Response): Promise<void> => 
 
 export const removeUnit = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    await prisma.unit.update({ where: { id: Number(id) }, data: { active: false } });
+    await UnitsService.deactivate(Number(req.params.id));
     res.json({ message: 'Unidade desativada' });
   } catch {
     res.status(500).json({ message: 'Erro ao remover unidade' });

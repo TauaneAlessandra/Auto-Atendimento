@@ -4,7 +4,7 @@ import { authenticate, requireAdmin } from '../../middlewares/auth.middleware';
 
 const router = Router();
 
-router.use(authenticate, requireAdmin as any);
+router.use(authenticate, requireAdmin);
 router.get('/', listUsers);
 router.post('/', createUser);
 router.put('/:id', updateUser);

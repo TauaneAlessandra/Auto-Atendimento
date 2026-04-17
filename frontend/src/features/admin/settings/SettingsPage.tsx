@@ -1,14 +1,16 @@
-import { useEffect, useState, FormEvent } from 'react';
-import { getCategories, createCategory, updateCategory, deleteCategory, getUnits, createUnit, updateUnit, deleteUnit } from '../../../services/api';
+import { useState, FormEvent } from 'react';
+import { useSettings } from '../../../viewmodels/useSettings';
 import { Category, Unit } from '../../../types';
 import { Card } from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Badge from '../../../components/ui/Badge';
 import { Plus, Pencil, Check, X, Trash2 } from 'lucide-react';
-import { useAdminToast } from '../../../components/layout/AdminLayout';
 
-function EditableItem({ name, active, onSave, onDelete }: { name: string; active: boolean; onSave: (n: string, a: boolean) => void; onDelete: () => void }) {
+function EditableItem({ name, active, onSave, onDelete }: {
+  name: string; active: boolean;
+  onSave: (n: string, a: boolean) => void; onDelete: () => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(name);
   return (
@@ -39,7 +41,9 @@ function EditableItem({ name, active, onSave, onDelete }: { name: string; active
 
 function Section({ title, items, onAdd, onSave, onDelete }: {
   title: string; items: (Category | Unit)[];
-  onAdd: (name: string) => void; onSave: (id: number, name: string, active: boolean) => void; onDelete: (id: number) => void;
+  onAdd: (name: string) => void;
+  onSave: (id: number, name: string, active: boolean) => void;
+  onDelete: (id: number) => void;
 }) {
   const [newName, setNewName] = useState('');
   const handleAdd = (e: FormEvent) => {
@@ -67,16 +71,7 @@ function Section({ title, items, onAdd, onSave, onDelete }: {
 }
 
 export default function SettingsPage() {
-  const toast = useAdminToast();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
-
-  const fetchAll = () => Promise.all([getCategories(), getUnits()]).then(([c, u]) => { setCategories(c.data); setUnits(u.data); });
-  useEffect(() => { fetchAll(); }, []);
-
-  const wrap = async (fn: () => Promise<unknown>, msg: string) => {
-    try { await fn(); fetchAll(); toast.success(msg); } catch { toast.error('Erro ao realizar operação'); }
-  };
+  const vm = useSettings();
 
   return (
     <div className="space-y-6">
@@ -87,17 +82,17 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Section
           title="Categorias de Produtos"
-          items={categories}
-          onAdd={(n) => wrap(() => createCategory({ name: n }), 'Categoria criada!')}
-          onSave={(id, n, a) => wrap(() => updateCategory(id, { name: n, active: a }), 'Categoria atualizada!')}
-          onDelete={(id) => { if (confirm('Desativar esta categoria?')) wrap(() => deleteCategory(id), 'Categoria desativada'); }}
+          items={vm.categories}
+          onAdd={vm.addCategory}
+          onSave={vm.saveCategory}
+          onDelete={vm.removeCategory}
         />
         <Section
           title="Unidades de Medida"
-          items={units}
-          onAdd={(n) => wrap(() => createUnit({ name: n }), 'Unidade criada!')}
-          onSave={(id, n, a) => wrap(() => updateUnit(id, { name: n, active: a }), 'Unidade atualizada!')}
-          onDelete={(id) => { if (confirm('Desativar esta unidade?')) wrap(() => deleteUnit(id), 'Unidade desativada'); }}
+          items={vm.units}
+          onAdd={vm.addUnit}
+          onSave={vm.saveUnit}
+          onDelete={vm.removeUnit}
         />
       </div>
     </div>

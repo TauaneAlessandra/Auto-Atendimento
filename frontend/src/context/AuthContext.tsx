@@ -12,6 +12,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+function parseStoredUser(raw: string | null): AuthUser | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as AuthUser;
+  } catch {
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -19,27 +28,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedUser = parseStoredUser(localStorage.getItem('user'));
 
-    if (storedToken && storedUser && storedToken !== 'mock-token') {
+    if (storedToken && storedUser) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      setUser(storedUser);
       getMe().catch(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setToken(null);
         setUser(null);
       });
-    } else {
-      // ── MOCK LOGIN (Skip temporarily) ──
-      const mockUser = { id: 1, name: 'Admin (Mock)', email: 'admin@admin.com', role: 'admin' } as AuthUser;
-      const mockToken = 'mock-token';
-      
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('token', mockToken);
-      
-      setUser(mockUser);
-      setToken(mockToken);
     }
     setLoading(false);
   }, []);

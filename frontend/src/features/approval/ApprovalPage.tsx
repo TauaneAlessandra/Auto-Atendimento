@@ -1,8 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import { getOrderByToken, approveOrder, rejectOrder } from '../../services/api';
-import { Order } from '../../types';
+import { useApproval } from '../../viewmodels/useApproval';
 import { CheckCircle, XCircle, Clock, AlertCircle, Zap } from 'lucide-react';
 import Spinner from '../../components/ui/Spinner';
 import Badge from '../../components/ui/Badge';
@@ -21,61 +17,28 @@ const workLabels: Record<string, string> = { em_andamento: 'Em Andamento', pausa
 const workBadge: Record<string, 'info' | 'warning' | 'success'> = { em_andamento: 'info', pausado: 'warning', concluido: 'success' };
 
 export default function ApprovalPage() {
-  const { token } = useParams<{ token: string }>();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [acting, setActing] = useState(false);
-  const [actionError, setActionError] = useState('');
+  const vm = useApproval();
 
-  useEffect(() => {
-    if (!token) return;
-    getOrderByToken(token).then((r) => setOrder(r.data)).catch(() => setError('Proposta não encontrada')).finally(() => setLoading(false));
-  }, [token]);
+  if (vm.loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><Spinner size="lg" /></div>;
 
-  const handleApprove = async () => {
-    if (!token) return;
-    setActing(true); setActionError('');
-    try { const r = await approveOrder(token); setOrder(r.data); }
-    catch (e: unknown) {
-      const msg = axios.isAxiosError(e) ? e.response?.data?.message : undefined;
-      setActionError(msg || 'Erro ao aprovar');
-    }
-    finally { setActing(false); }
-  };
-
-  const handleReject = async () => {
-    if (!token || !confirm('Rejeitar esta proposta?')) return;
-    setActing(true); setActionError('');
-    try { const r = await rejectOrder(token); setOrder(r.data); }
-    catch (e: unknown) {
-      const msg = axios.isAxiosError(e) ? e.response?.data?.message : undefined;
-      setActionError(msg || 'Erro ao rejeitar');
-    }
-    finally { setActing(false); }
-  };
-
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><Spinner size="lg" /></div>;
-
-  if (error || !order) return (
+  if (vm.error || !vm.order) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
         <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <h1 className="text-lg font-bold text-slate-800 mb-2">Proposta não encontrada</h1>
-        <p className="text-slate-500 text-sm">{error || 'O link é inválido.'}</p>
+        <p className="text-slate-500 text-sm">{vm.error || 'O link é inválido.'}</p>
       </div>
     </div>
   );
 
+  const { order } = vm;
   const cfg = statusCfg[order.status as StatusKey];
   const StatusIcon = cfg.icon;
   const isPending = order.status === 'pending';
-  const daysLeft = Math.max(0, Math.ceil((new Date(order.validUntil).getTime() - Date.now()) / 86400000));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4 flex justify-center pt-10">
       <div className="w-full max-w-xl space-y-4">
-        {/* Logo */}
         <div className="text-center mb-2">
           <div className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-full text-sm font-medium">
             <Zap className="w-4 h-4 text-blue-400" />
@@ -83,17 +46,15 @@ export default function ApprovalPage() {
           </div>
         </div>
 
-        {/* Status */}
         <div className={`${cfg.bg} ${cfg.border} border rounded-2xl p-4 flex items-center gap-3`}>
           <StatusIcon className={`w-8 h-8 flex-shrink-0 ${cfg.color}`} />
           <div>
             <p className={`font-bold ${cfg.color}`}>{cfg.label}</p>
-            {isPending && <p className="text-slate-500 text-sm">Válido até {new Date(order.validUntil).toLocaleDateString('pt-BR')} ({daysLeft} dia{daysLeft !== 1 ? 's' : ''})</p>}
+            {isPending && <p className="text-slate-500 text-sm">Válido até {new Date(order.validUntil).toLocaleDateString('pt-BR')} ({vm.daysLeft} dia{vm.daysLeft !== 1 ? 's' : ''})</p>}
             {order.status === 'approved' && order.approvedAt && <p className="text-slate-500 text-sm">Aprovado em {new Date(order.approvedAt).toLocaleDateString('pt-BR')}</p>}
           </div>
         </div>
 
-        {/* Delivery Status */}
         {order.status === 'approved' && order.deliveryStatus && (
           <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4 flex items-center justify-between shadow-sm">
             <p className="text-sm font-medium text-slate-600">Status do Pedido</p>
@@ -101,7 +62,6 @@ export default function ApprovalPage() {
           </div>
         )}
 
-        {/* Order Card */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="bg-slate-900 px-5 py-4 flex items-start justify-between">
             <div>
@@ -115,14 +75,12 @@ export default function ApprovalPage() {
           </div>
 
           <div className="p-5 space-y-5">
-            {/* Client info */}
             <div className="grid grid-cols-2 gap-3 text-sm">
               {[['Cliente', order.clientName], ['Telefone', order.phone], ['Responsável', order.responsible], ['Endereço', order.address]].map(([l, v]) => (
                 <div key={l}><p className="text-xs text-slate-400 mb-0.5">{l}</p><p className="font-medium text-slate-800">{v}</p></div>
               ))}
             </div>
 
-            {/* Items table */}
             <div className="border border-slate-200 rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50">
@@ -148,15 +106,14 @@ export default function ApprovalPage() {
               </table>
             </div>
 
-            {/* Action buttons */}
             {isPending && (
               <>
-                {actionError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{actionError}</div>}
+                {vm.actionError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{vm.actionError}</div>}
                 <div className="flex gap-3">
-                  <Button variant="secondary" size="lg" className="flex-1 border-red-200 text-red-600 hover:bg-red-50" onClick={handleReject} loading={acting} icon={<XCircle className="w-5 h-5" />}>
+                  <Button variant="secondary" size="lg" className="flex-1 border-red-200 text-red-600 hover:bg-red-50" onClick={vm.handleReject} loading={vm.acting} icon={<XCircle className="w-5 h-5" />}>
                     Rejeitar
                   </Button>
-                  <Button variant="success" size="lg" className="flex-1" onClick={handleApprove} loading={acting} icon={<CheckCircle className="w-5 h-5" />}>
+                  <Button variant="success" size="lg" className="flex-1" onClick={vm.handleApprove} loading={vm.acting} icon={<CheckCircle className="w-5 h-5" />}>
                     Aprovar Proposta
                   </Button>
                 </div>
