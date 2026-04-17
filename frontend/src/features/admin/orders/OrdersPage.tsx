@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getOrders, updateWorkStatus } from '../../../services/api';
-import { Order, WorkStatus } from '../../../types';
+import { getOrders, updateDeliveryStatus } from '../../../services/api';
+import { Order, DeliveryStatus } from '../../../types';
 import Modal from '../../../components/ui/Modal';
-import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import { Card } from '../../../components/ui/Card';
 import Spinner from '../../../components/ui/Spinner';
@@ -19,9 +18,9 @@ const statusConfig: Record<StatusKey, { label: string; variant: 'warning' | 'suc
 };
 
 const workStatusOptions = [
-  { value: 'em_andamento', label: 'Em Andamento' },
-  { value: 'pausado', label: 'Pausado' },
-  { value: 'concluido', label: 'Concluído' },
+  { value: 'em_andamento', label: 'Preparando Pedido' },
+  { value: 'pausado', label: 'Aguardando Estoque' },
+  { value: 'concluido', label: 'Pronto / Entregue' },
 ];
 
 export default function OrdersPage() {
@@ -33,16 +32,23 @@ export default function OrdersPage() {
 
   const fetchOrders = () => {
     setLoading(true);
-    getOrders().then((r) => setOrders(r.data)).finally(() => setLoading(false));
+    getOrders()
+      .then((r) => {
+        // Handle paginated response structure { data: [], total, ... }
+        const orderList = Array.isArray(r.data) ? r.data : (r.data.data || []);
+        setOrders(orderList);
+      })
+      .catch(() => setOrders([]))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchOrders(); }, []);
 
-  const handleWorkStatus = async (orderId: number, ws: string) => {
+  const handleDeliveryStatus = async (orderId: number, ws: string) => {
     try {
-      await updateWorkStatus(orderId, ws);
+      await updateDeliveryStatus(orderId, ws);
       fetchOrders();
-      if (selected?.id === orderId) setSelected((p) => p ? { ...p, workStatus: ws as WorkStatus } : null);
+      if (selected?.id === orderId) setSelected((p) => p ? { ...p, deliveryStatus: ws as DeliveryStatus } : null);
       toast.success('Status atualizado!');
     } catch { toast.error('Erro ao atualizar status'); }
   };
@@ -57,8 +63,8 @@ export default function OrdersPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-slate-800">Ordens de Serviço</h2>
-        <p className="text-slate-500 text-sm">Todas as OS geradas pelo chatbot</p>
+        <h2 className="text-xl font-bold text-slate-800">Cotações de Produtos</h2>
+        <p className="text-slate-500 text-sm">Todas as cotações geradas pelo chatbot</p>
       </div>
 
       <Card padding={false}>
@@ -68,7 +74,7 @@ export default function OrdersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200">
-                {['#', 'Cliente', 'Gestor', 'Centro de Custo', 'Total', 'Status', 'Andamento', 'Data', ''].map((h) => (
+                {['#', 'Cliente', 'Responsável', 'Endereço', 'Total', 'Status', 'Andamento', 'Data', ''].map((h) => (
                   <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -83,15 +89,15 @@ export default function OrdersPage() {
                       <p className="font-medium text-slate-800">{o.clientName}</p>
                       <p className="text-xs text-slate-400">{o.phone}</p>
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600">{o.manager}</td>
-                    <td className="px-5 py-3.5 text-slate-600">{o.costCenter}</td>
+                    <td className="px-5 py-3.5 text-slate-600">{o.responsible}</td>
+                    <td className="px-5 py-3.5 text-slate-600">{o.address}</td>
                     <td className="px-5 py-3.5 font-semibold text-blue-600">R$ {o.total.toFixed(2)}</td>
                     <td className="px-5 py-3.5"><Badge variant={cfg.variant} dot>{cfg.label}</Badge></td>
                     <td className="px-5 py-3.5">
                       {o.status === 'approved' ? (
                         <select
-                          value={o.workStatus || ''}
-                          onChange={(e) => handleWorkStatus(o.id, e.target.value)}
+                          value={o.deliveryStatus || ''}
+                          onChange={(e) => handleDeliveryStatus(o.id, e.target.value)}
                           className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
                         >
                           {workStatusOptions.map((ws) => <option key={ws.value} value={ws.value}>{ws.label}</option>)}
@@ -112,7 +118,7 @@ export default function OrdersPage() {
                   </tr>
                 );
               })}
-              {!orders.length && <tr><td colSpan={9} className="px-5 py-16 text-center text-slate-400">Nenhuma OS encontrada</td></tr>}
+              {!orders.length && <tr><td colSpan={9} className="px-5 py-16 text-center text-slate-400">Nenhuma cotação encontrada</td></tr>}
             </tbody>
           </table>
         )}
@@ -120,10 +126,10 @@ export default function OrdersPage() {
 
       {/* Detail Modal */}
       {selected && (
-        <Modal isOpen={!!selected} onClose={() => setSelected(null)} title={`OS #${selected.id} — Detalhes`} size="lg">
+        <Modal isOpen={!!selected} onClose={() => setSelected(null)} title={`Cotação #${selected.id} — Detalhes`} size="lg">
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-3">
-              {[['Cliente', selected.clientName], ['Telefone', selected.phone], ['Gestor', selected.manager], ['Centro de Custo', selected.costCenter],].map(([l, v]) => (
+              {[['Cliente', selected.clientName], ['Telefone', selected.phone], ['Responsável', selected.responsible], ['Endereço', selected.address],].map(([l, v]) => (
                 <div key={l}><p className="text-xs text-slate-400 mb-0.5">{l}</p><p className="text-sm font-medium text-slate-800">{v}</p></div>
               ))}
               <div><p className="text-xs text-slate-400 mb-1">Status</p><Badge variant={statusConfig[selected.status as StatusKey].variant} dot>{statusConfig[selected.status as StatusKey].label}</Badge></div>
@@ -155,11 +161,11 @@ export default function OrdersPage() {
 
             {selected.status === 'approved' && (
               <div>
-                <p className="text-sm font-semibold text-slate-700 mb-2">Status da Obra</p>
+                <p className="text-sm font-semibold text-slate-700 mb-2">Status do Pedido</p>
                 <div className="flex gap-2">
                   {workStatusOptions.map((ws) => (
-                    <button key={ws.value} onClick={() => handleWorkStatus(selected.id, ws.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selected.workStatus === ws.value ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    <button key={ws.value} onClick={() => handleDeliveryStatus(selected.id, ws.value)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selected.deliveryStatus === ws.value ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                       {ws.label}
                     </button>
                   ))}

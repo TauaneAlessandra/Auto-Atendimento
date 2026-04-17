@@ -19,20 +19,21 @@ async function main() {
     console.log('✅ Admin criado: admin@admin.com / admin123');
   }
 
-  const ti = await prisma.serviceType.upsert({ where: { name: 'TI' }, update: {}, create: { name: 'TI' } });
-  const infra = await prisma.serviceType.upsert({ where: { name: 'Infraestrutura' }, update: {}, create: { name: 'Infraestrutura' } });
+  const utencilios = await prisma.category.upsert({ where: { name: 'Utencílios Domésticos' }, update: {}, create: { name: 'Utencílios Domésticos' } });
+  const decoracao = await prisma.category.upsert({ where: { name: 'Decoração' }, update: {}, create: { name: 'Decoração' } });
+  const papelaria = await prisma.category.upsert({ where: { name: 'Papelaria' }, update: {}, create: { name: 'Papelaria' } });
 
   const un = await prisma.unit.upsert({ where: { name: 'Unidade' }, update: {}, create: { name: 'Unidade' } });
-  const hr = await prisma.unit.upsert({ where: { name: 'Hora' }, update: {}, create: { name: 'Hora' } });
-  const mes = await prisma.unit.upsert({ where: { name: 'Mês' }, update: {}, create: { name: 'Mês' } });
+  const pct = await prisma.unit.upsert({ where: { name: 'Pacote' }, update: {}, create: { name: 'Pacote' } });
+  const conj = await prisma.unit.upsert({ where: { name: 'Conjunto' }, update: {}, create: { name: 'Conjunto' } });
 
   const pCount = await prisma.product.count();
   if (pCount === 0) {
     await prisma.product.createMany({
       data: [
-        { name: 'Suporte Técnico', price: 150, serviceTypeId: ti.id, description: 'Suporte técnico presencial ou remoto', unitId: hr.id, minQty: 1, maxQty: 40 },
-        { name: 'Instalação de Software', price: 200, serviceTypeId: ti.id, description: 'Instalação e configuração de software', unitId: un.id, minQty: 1, maxQty: 50 },
-        { name: 'Manutenção de Rede', price: 500, serviceTypeId: infra.id, description: 'Manutenção e configuração de rede', unitId: mes.id, minQty: 1, maxQty: 12 },
+        { name: 'Jogo de Copos (6 un)', price: 45.90, categoryId: utencilios.id, description: 'Conjunto de copos de vidro resistente', unitId: conj.id, minQty: 1, maxQty: 50 },
+        { name: 'Porta Retrato Moderno', price: 29.90, categoryId: decoracao.id, description: 'Porta retrato em metal e vidro 10x15', unitId: un.id, minQty: 1, maxQty: 100 },
+        { name: 'Caderno Universitário 10 Matérias', price: 18.50, categoryId: papelaria.id, description: 'Capa dura, 200 folhas estampa sortida', unitId: un.id, minQty: 2, maxQty: 200 },
       ],
     });
     console.log('✅ Produtos de exemplo criados');

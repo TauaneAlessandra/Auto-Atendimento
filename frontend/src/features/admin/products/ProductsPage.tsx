@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct, getServiceTypes, getUnits } from '../../../services/api';
-import { Product, ServiceType, Unit } from '../../../types';
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, getUnits } from '../../../services/api';
+import { Product, Category, Unit } from '../../../types';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -14,16 +14,16 @@ import { Plus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useAdminToast } from '../../../components/layout/AdminLayout';
 
 interface ProductForm {
-  name: string; price: string; serviceTypeId: string; description: string;
+  name: string; price: string; categoryId: string; description: string;
   unitId: string; minQty: string; maxQty: string; photo: File | null; active: boolean;
 }
 
-const defaultForm: ProductForm = { name: '', price: '', serviceTypeId: '', description: '', unitId: '', minQty: '1', maxQty: '10', photo: null, active: true };
+const defaultForm: ProductForm = { name: '', price: '', categoryId: '', description: '', unitId: '', minQty: '1', maxQty: '10', photo: null, active: true };
 
 export default function ProductsPage() {
   const toast = useAdminToast();
   const [products, setProducts] = useState<Product[]>([]);
-  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -35,8 +35,8 @@ export default function ProductsPage() {
 
   const fetchAll = () => {
     setLoading(true);
-    Promise.all([getProducts(), getServiceTypes(), getUnits()])
-      .then(([p, s, u]) => { setProducts(p.data); setServiceTypes(s.data); setUnits(u.data); })
+    Promise.all([getProducts(), getCategories(), getUnits()])
+      .then(([p, c, u]) => { setProducts(p.data); setCategories(c.data); setUnits(u.data); })
       .finally(() => setLoading(false));
   };
 
@@ -45,7 +45,7 @@ export default function ProductsPage() {
   const openCreate = () => { setEditing(null); setForm(defaultForm); setIsOpen(true); };
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, price: String(p.price), serviceTypeId: String(p.serviceTypeId), description: p.description, unitId: String(p.unitId), minQty: String(p.minQty), maxQty: String(p.maxQty), photo: null, active: p.active });
+    setForm({ name: p.name, price: String(p.price), categoryId: String(p.categoryId), description: p.description, unitId: String(p.unitId), minQty: String(p.minQty), maxQty: String(p.maxQty), photo: null, active: p.active });
     setIsOpen(true);
   };
 
@@ -54,7 +54,7 @@ export default function ProductsPage() {
     setSaving(true);
     try {
       const fd = new FormData();
-      Object.entries({ name: form.name, price: form.price, serviceTypeId: form.serviceTypeId, description: form.description, unitId: form.unitId, minQty: form.minQty, maxQty: form.maxQty, active: String(form.active) }).forEach(([k, v]) => fd.append(k, v));
+      Object.entries({ name: form.name, price: form.price, categoryId: form.categoryId, description: form.description, unitId: form.unitId, minQty: form.minQty, maxQty: form.maxQty, active: String(form.active) }).forEach(([k, v]) => fd.append(k, v));
       if (form.photo) fd.append('photo', form.photo);
       if (editing) await updateProduct(editing.id, fd);
       else await createProduct(fd);
@@ -79,7 +79,7 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Produtos</h2>
-          <p className="text-slate-500 text-sm">Catálogo de serviços disponíveis</p>
+          <p className="text-slate-500 text-sm">Catálogo de produtos disponíveis</p>
         </div>
         <Button onClick={openCreate} icon={<Plus className="w-4 h-4" />}>Novo Produto</Button>
       </div>
@@ -92,7 +92,7 @@ export default function ProductsPage() {
             <thead>
               <tr className="border-b border-slate-200">
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Produto</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unidade</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Qtd</th>
@@ -114,7 +114,7 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-600">{p.serviceType.name}</td>
+                  <td className="px-5 py-3.5 text-slate-600">{p.category.name}</td>
                   <td className="px-5 py-3.5 text-slate-600">{p.unit.name}</td>
                   <td className="px-5 py-3.5 font-semibold text-blue-600">R$ {p.price.toFixed(2)}</td>
                   <td className="px-5 py-3.5 text-slate-500">{p.minQty}–{p.maxQty}</td>
@@ -143,35 +143,52 @@ export default function ProductsPage() {
           </div>
         }
       >
-        <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
+        <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
           <ImageCropper
             value={form.photo}
             previewUrl={editing?.photo ? `/uploads/${editing.photo}` : undefined}
             onChange={(file) => f('photo', file)}
-            label="Foto do Produto"
+            label="Visual Identitário"
           />
-          <div className="grid grid-cols-2 gap-4">
+          
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5">
             <div className="col-span-2">
-              <Input label="Nome do Produto *" value={form.name} onChange={(e) => f('name', e.target.value)} placeholder="Ex: Suporte Técnico" required />
+              <Input label="Nome do Produto *" value={form.name} onChange={(e) => f('name', e.target.value)} placeholder="Ex: Martelo de Aço" required />
             </div>
-            <Input label="Preço (R$) *" type="number" step="0.01" min="0" value={form.price} onChange={(e) => f('price', e.target.value)} placeholder="0,00" required />
-            <Select label="Tipo de Serviço *" value={form.serviceTypeId} onChange={(e) => f('serviceTypeId', e.target.value)} required>
-              <option value="">Selecione...</option>
-              {serviceTypes.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            
+            <Input label="Valor Base (R$) *" type="number" step="0.01" min="0" value={form.price} onChange={(e) => f('price', e.target.value)} placeholder="0,00" required />
+            
+            <Select label="Categoria do Produto *" value={form.categoryId} onChange={(e) => f('categoryId', e.target.value)} required>
+              <option value="">Selecione a categoria...</option>
+              {categories.filter((c) => c.active).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
-            <Select label="Unidade *" value={form.unitId} onChange={(e) => f('unitId', e.target.value)} required>
-              <option value="">Selecione...</option>
+            
+            <Select label="Unidade de Medida *" value={form.unitId} onChange={(e) => f('unitId', e.target.value)} required>
+              <option value="">Selecione a unidade...</option>
               {units.filter((u) => u.active).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
             </Select>
-            <Input label="Qtd Mínima *" type="number" min="1" value={form.minQty} onChange={(e) => f('minQty', e.target.value)} required />
-            <Input label="Qtd Máxima *" type="number" min="1" value={form.maxQty} onChange={(e) => f('maxQty', e.target.value)} required />
-            <div className="col-span-2">
-              <Textarea label="Descrição *" value={form.description} onChange={(e) => f('description', e.target.value)} placeholder="Descreva o produto..." required />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Qtd Mín *" type="number" min="1" value={form.minQty} onChange={(e) => f('minQty', e.target.value)} required />
+              <Input label="Qtd Máx *" type="number" min="1" value={form.maxQty} onChange={(e) => f('maxQty', e.target.value)} required />
             </div>
+            
+            <div className="col-span-2">
+              <Textarea label="Descrição do Produto *" value={form.description} onChange={(e) => f('description', e.target.value)} placeholder="Descreva os detalhes deste produto..." required />
+            </div>
+            
             {editing && (
-              <div className="col-span-2 flex items-center gap-2 pt-1">
-                <input type="checkbox" id="prod-active" checked={form.active} onChange={(e) => f('active', e.target.checked)} className="rounded accent-blue-600" />
-                <label htmlFor="prod-active" className="text-sm text-slate-700">Produto ativo</label>
+              <div className="col-span-2 flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="space-y-0.5">
+                   <p className="text-xs font-bold text-slate-900">Disponibilidade do Item</p>
+                   <p className="text-[10px] text-slate-500 font-medium">Define se o produto aparece no catálogo</p>
+                </div>
+                <div className="flex items-center gap-3">
+                   <span className={`text-[10px] font-black uppercase tracking-widest ${form.active ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {form.active ? 'Ativo' : 'Inativo'}
+                   </span>
+                   <input type="checkbox" id="prod-active" checked={form.active} onChange={(e) => f('active', e.target.checked)} className="w-5 h-5 rounded-lg accent-blue-600 cursor-pointer" />
+                </div>
               </div>
             )}
           </div>

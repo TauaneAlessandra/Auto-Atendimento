@@ -70,31 +70,40 @@ export default function ImageCropper({ value, previewUrl, onChange, label = 'Fot
   const currentPreview = preview || (value ? URL.createObjectURL(value) : null);
 
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <div className="flex items-center gap-4">
-        <div className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+    <div className="flex flex-col gap-3 group/cropper">
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</span>
+      <div className="flex items-center gap-6 p-4 bg-slate-50/50 border border-slate-100 rounded-3xl transition-all hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5">
+        <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-200 bg-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm transition-transform group-hover/cropper:scale-105 duration-500">
           {currentPreview ? (
-            <img src={currentPreview} alt="preview" className="w-full h-full object-cover" />
+            <img src={currentPreview} alt="preview" className="w-full h-full object-cover animate-reveal" />
           ) : (
-            <ImageIcon className="w-6 h-6 text-slate-300" />
+            <ImageIcon className="w-8 h-8 text-slate-200" />
           )}
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-2 text-[13px] text-blue-600 hover:text-blue-700 font-black uppercase tracking-tighter transition-all"
           >
-            <Upload className="w-4 h-4" />
-            {currentPreview ? 'Trocar foto' : 'Selecionar foto'}
+            <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-lg shadow-blue-500/20">
+               <Upload className="w-3 h-3" />
+            </div>
+            {currentPreview ? 'Alterar Imagem' : 'Enviar Mídia'}
           </button>
-          {currentPreview && (
-            <button type="button" onClick={() => { setPreview(null); onChange(null as unknown as File); }} className="text-xs text-slate-400 hover:text-red-500 text-left">
-              Remover foto
-            </button>
-          )}
-          <p className="text-xs text-slate-400">JPEG, PNG ou WEBP. Máx 5MB.</p>
+          
+          <div className="flex items-center gap-3">
+            {currentPreview && (
+              <button 
+                type="button" 
+                onClick={() => { setPreview(null); onChange(null as unknown as File); }} 
+                className="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 transition-colors"
+              >
+                Remover
+              </button>
+            )}
+            <p className="text-[10px] text-slate-400 font-medium leading-none">JPEG/PNG • Máx 5MB</p>
+          </div>
         </div>
       </div>
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />

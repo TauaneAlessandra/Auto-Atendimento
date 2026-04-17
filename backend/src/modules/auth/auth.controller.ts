@@ -3,9 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../../config/database';
 import { AuthRequest } from '../../middlewares/auth.middleware';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
-const EXPIRES_IN = '8h';
+import { env } from '../../config/env.config';
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -24,9 +22,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ message: 'Credenciais inválidas' });
       return;
     }
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: EXPIRES_IN });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      env.JWT_SECRET,
+      { expiresIn: '8h' },
+    );
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
-  } catch {
+  } catch (error) {
+    console.error('[auth.login]', error);
     res.status(500).json({ message: 'Erro ao realizar login' });
   }
 };
@@ -39,7 +42,8 @@ export const me = async (req: AuthRequest, res: Response): Promise<void> => {
     });
     if (!user) { res.status(404).json({ message: 'Usuário não encontrado' }); return; }
     res.json(user);
-  } catch {
+  } catch (error) {
+    console.error('[auth.me]', error);
     res.status(500).json({ message: 'Erro ao buscar usuário' });
   }
 };

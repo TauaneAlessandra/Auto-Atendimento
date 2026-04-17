@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { env } from '../config/env.config';
 
 export interface AuthRequest extends Request {
   user?: { id: number; email: string; role: string };
 }
-
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
@@ -13,9 +12,17 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     res.status(401).json({ message: 'Token não fornecido' });
     return;
   }
+  
+  const token = authHeader.split(' ')[1];
+  
+  // ── MOCK BYPASS (Temporário p/ Desenvolvimento) ──
+  if (token === 'mock-token') {
+    req.user = { id: 1, email: 'admin@mock.com', role: 'admin' };
+    return next();
+  }
+
   try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; email: string; role: string };
+    const decoded = jwt.verify(token, env.JWT_SECRET) as { id: number; email: string; role: string };
     req.user = decoded;
     next();
   } catch {

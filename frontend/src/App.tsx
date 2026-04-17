@@ -9,6 +9,7 @@ import OrdersPage from './features/admin/orders/OrdersPage';
 import SettingsPage from './features/admin/settings/SettingsPage';
 import UsersPage from './features/admin/users/UsersPage';
 import ApprovalPage from './features/approval/ApprovalPage';
+
 import { ReactNode } from 'react';
 import Spinner from './components/ui/Spinner';
 
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="users" element={<UsersPage />} />
       </Route>
+
       <Route path="/" element={<Navigate to={home} />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
@@ -44,7 +46,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>

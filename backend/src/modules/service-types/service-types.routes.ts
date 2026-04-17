@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { listServiceTypes, createServiceType, updateServiceType, removeServiceType } from './service-types.controller';
+import { listCategories, createCategory, updateCategory, removeCategory } from './service-types.controller';
 import { authenticate, requireAdmin } from '../../middlewares/auth.middleware';
 
 const router = Router();
 
-router.get('/', listServiceTypes);
-router.post('/', authenticate, requireAdmin as any, createServiceType);
-router.put('/:id', authenticate, requireAdmin as any, updateServiceType);
-router.delete('/:id', authenticate, requireAdmin as any, removeServiceType);
+router.get('/', listCategories);
+router.post('/', authenticate, requireAdmin as any, createCategory);
+router.put('/:id', authenticate, requireAdmin as any, updateCategory);
+router.delete('/:id', authenticate, requireAdmin as any, removeCategory);
 
 export default router;

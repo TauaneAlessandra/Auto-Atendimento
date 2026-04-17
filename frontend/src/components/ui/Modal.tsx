@@ -23,18 +23,39 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${sizes[size]} max-h-[90vh] flex flex-col`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h2 className="text-base font-semibold text-slate-800">{title}</h2>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-            <X className="w-4 h-4" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-reveal">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
+      
+      <div className={`relative bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-premium w-full ${sizes[size]} max-h-[85vh] flex flex-col overflow-hidden border border-white/20`}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 flex-shrink-0">
+          <div className="space-y-1">
+             <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-none">Formulário de Gestão</span>
+             <h2 className="text-xl font-black text-slate-900 tracking-tight leading-none">{title}</h2>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-full transition-all">
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
-        {footer && <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl">{footer}</div>}
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-8 py-8 scrollbar-hide">
+          <div className="animate-slide-up-fancy mb-4">
+            {children}
+          </div>
+        </div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50 backdrop-blur-sm flex-shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }

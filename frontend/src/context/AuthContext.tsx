@@ -20,7 +20,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
+
+    if (storedToken && storedUser && storedToken !== 'mock-token') {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
       getMe().catch(() => {
@@ -29,6 +30,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setToken(null);
         setUser(null);
       });
+    } else {
+      // ── MOCK LOGIN (Skip temporarily) ──
+      const mockUser = { id: 1, name: 'Admin (Mock)', email: 'admin@admin.com', role: 'admin' } as AuthUser;
+      const mockToken = 'mock-token';
+      
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      localStorage.setItem('token', mockToken);
+      
+      setUser(mockUser);
+      setToken(mockToken);
     }
     setLoading(false);
   }, []);

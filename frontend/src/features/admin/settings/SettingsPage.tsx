@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react';
-import { getServiceTypes, createServiceType, updateServiceType, deleteServiceType, getUnits, createUnit, updateUnit, deleteUnit } from '../../../services/api';
-import { ServiceType, Unit } from '../../../types';
+import { getCategories, createCategory, updateCategory, deleteCategory, getUnits, createUnit, updateUnit, deleteUnit } from '../../../services/api';
+import { Category, Unit } from '../../../types';
 import { Card } from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -38,7 +38,7 @@ function EditableItem({ name, active, onSave, onDelete }: { name: string; active
 }
 
 function Section({ title, items, onAdd, onSave, onDelete }: {
-  title: string; items: (ServiceType | Unit)[];
+  title: string; items: (Category | Unit)[];
   onAdd: (name: string) => void; onSave: (id: number, name: string, active: boolean) => void; onDelete: (id: number) => void;
 }) {
   const [newName, setNewName] = useState('');
@@ -68,10 +68,10 @@ function Section({ title, items, onAdd, onSave, onDelete }: {
 
 export default function SettingsPage() {
   const toast = useAdminToast();
-  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
 
-  const fetchAll = () => Promise.all([getServiceTypes(), getUnits()]).then(([s, u]) => { setServiceTypes(s.data); setUnits(u.data); });
+  const fetchAll = () => Promise.all([getCategories(), getUnits()]).then(([c, u]) => { setCategories(c.data); setUnits(u.data); });
   useEffect(() => { fetchAll(); }, []);
 
   const wrap = async (fn: () => Promise<unknown>, msg: string) => {
@@ -82,15 +82,15 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-slate-800">Configurações</h2>
-        <p className="text-slate-500 text-sm">Gerencie tipos de serviço e unidades de medida</p>
+        <p className="text-slate-500 text-sm">Gerencie as categorias de produtos e unidades de medida</p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Section
-          title="Tipos de Serviço"
-          items={serviceTypes}
-          onAdd={(n) => wrap(() => createServiceType({ name: n }), 'Tipo criado!')}
-          onSave={(id, n, a) => wrap(() => updateServiceType(id, { name: n, active: a }), 'Tipo atualizado!')}
-          onDelete={(id) => { if (confirm('Desativar este tipo?')) wrap(() => deleteServiceType(id), 'Tipo desativado'); }}
+          title="Categorias de Produtos"
+          items={categories}
+          onAdd={(n) => wrap(() => createCategory({ name: n }), 'Categoria criada!')}
+          onSave={(id, n, a) => wrap(() => updateCategory(id, { name: n, active: a }), 'Categoria atualizada!')}
+          onDelete={(id) => { if (confirm('Desativar esta categoria?')) wrap(() => deleteCategory(id), 'Categoria desativada'); }}
         />
         <Section
           title="Unidades de Medida"

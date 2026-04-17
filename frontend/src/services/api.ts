@@ -16,7 +16,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      // window.location.href = '/login'; // REMOVED to prevent infinite loops during dev
     }
     return Promise.reject(err);
   }
@@ -45,11 +45,11 @@ export const updateProduct = (id: number, data: FormData) =>
   api.put(`/products/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const deleteProduct = (id: number) => api.delete(`/products/${id}`);
 
-// Service Types
-export const getServiceTypes = () => api.get('/service-types');
-export const createServiceType = (data: object) => api.post('/service-types', data);
-export const updateServiceType = (id: number, data: object) => api.put(`/service-types/${id}`, data);
-export const deleteServiceType = (id: number) => api.delete(`/service-types/${id}`);
+// Categories
+export const getCategories = () => api.get('/categories');
+export const createCategory = (data: object) => api.post('/categories', data);
+export const updateCategory = (id: number, data: object) => api.put(`/categories/${id}`, data);
+export const deleteCategory = (id: number) => api.delete(`/categories/${id}`);
 
 // Units
 export const getUnits = () => api.get('/units');
@@ -64,8 +64,8 @@ export const getOrderByToken = (token: string) => api.get(`/orders/approval/${to
 export const createOrder = (data: object) => api.post('/orders', data);
 export const approveOrder = (token: string) => api.patch(`/orders/approval/${token}/approve`);
 export const rejectOrder = (token: string) => api.patch(`/orders/approval/${token}/reject`);
-export const updateWorkStatus = (id: number, workStatus: string) =>
-  api.patch(`/orders/${id}/work-status`, { workStatus });
+export const updateDeliveryStatus = (id: number, deliveryStatus: string) =>
+  api.patch(`/orders/${id}/delivery-status`, { deliveryStatus });
 
 // Dashboard
 export const getDashboardStats = () => api.get('/dashboard/stats');

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import axios from 'axios';
 import { getOrderByToken, approveOrder, rejectOrder } from '../../services/api';
 import { Order } from '../../types';
 import { CheckCircle, XCircle, Clock, AlertCircle, Zap } from 'lucide-react';
@@ -36,7 +37,10 @@ export default function ApprovalPage() {
     if (!token) return;
     setActing(true); setActionError('');
     try { const r = await approveOrder(token); setOrder(r.data); }
-    catch (e: unknown) { setActionError((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erro ao aprovar'); }
+    catch (e: unknown) {
+      const msg = axios.isAxiosError(e) ? e.response?.data?.message : undefined;
+      setActionError(msg || 'Erro ao aprovar');
+    }
     finally { setActing(false); }
   };
 
@@ -44,7 +48,10 @@ export default function ApprovalPage() {
     if (!token || !confirm('Rejeitar esta proposta?')) return;
     setActing(true); setActionError('');
     try { const r = await rejectOrder(token); setOrder(r.data); }
-    catch { setActionError('Erro ao rejeitar'); }
+    catch (e: unknown) {
+      const msg = axios.isAxiosError(e) ? e.response?.data?.message : undefined;
+      setActionError(msg || 'Erro ao rejeitar');
+    }
     finally { setActing(false); }
   };
 
@@ -86,11 +93,11 @@ export default function ApprovalPage() {
           </div>
         </div>
 
-        {/* Work Status */}
-        {order.status === 'approved' && order.workStatus && (
+        {/* Delivery Status */}
+        {order.status === 'approved' && order.deliveryStatus && (
           <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4 flex items-center justify-between shadow-sm">
-            <p className="text-sm font-medium text-slate-600">Status da Obra</p>
-            <Badge variant={workBadge[order.workStatus] || 'gray'} dot>{workLabels[order.workStatus]}</Badge>
+            <p className="text-sm font-medium text-slate-600">Status do Pedido</p>
+            <Badge variant={workBadge[order.deliveryStatus] || 'gray'} dot>{workLabels[order.deliveryStatus]}</Badge>
           </div>
         )}
 
@@ -98,8 +105,8 @@ export default function ApprovalPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="bg-slate-900 px-5 py-4 flex items-start justify-between">
             <div>
-              <h1 className="text-lg font-bold text-white">OS #{order.id}</h1>
-              <p className="text-slate-400 text-sm">Proposta de Orçamento</p>
+              <h1 className="text-lg font-bold text-white">Cotação Nº {order.id}</h1>
+              <p className="text-slate-400 text-sm">Proposta de Venda</p>
             </div>
             <div className="text-right">
               <p className="text-slate-400 text-xs">Criada em</p>
@@ -110,7 +117,7 @@ export default function ApprovalPage() {
           <div className="p-5 space-y-5">
             {/* Client info */}
             <div className="grid grid-cols-2 gap-3 text-sm">
-              {[['Cliente', order.clientName], ['Telefone', order.phone], ['Gestor', order.manager], ['Centro de Custo', order.costCenter]].map(([l, v]) => (
+              {[['Cliente', order.clientName], ['Telefone', order.phone], ['Responsável', order.responsible], ['Endereço', order.address]].map(([l, v]) => (
                 <div key={l}><p className="text-xs text-slate-400 mb-0.5">{l}</p><p className="font-medium text-slate-800">{v}</p></div>
               ))}
             </div>

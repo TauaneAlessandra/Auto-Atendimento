@@ -13,17 +13,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
-  secondary: 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-sm',
-  danger: 'bg-red-600 hover:bg-red-700 text-white shadow-sm',
-  ghost: 'bg-transparent hover:bg-slate-100 text-slate-600',
-  success: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm',
+  primary: 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95',
+  secondary: 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm hover:-translate-y-0.5 active:scale-95',
+  danger: 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/10 hover:shadow-red-500/30 hover:-translate-y-0.5 active:scale-95',
+  ghost: 'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900',
+  success: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/30 hover:-translate-y-0.5 active:scale-95',
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'px-3 py-1.5 text-xs rounded-lg gap-1.5',
-  md: 'px-4 py-2 text-sm rounded-lg gap-2',
-  lg: 'px-5 py-2.5 text-sm rounded-xl gap-2',
+  sm: 'px-4 py-2 text-xs rounded-xl gap-2 font-bold',
+  md: 'px-6 py-2.5 text-sm rounded-2xl gap-2.5 font-bold',
+  lg: 'px-8 py-3.5 text-base rounded-2xl gap-3 font-black uppercase tracking-tight',
 };
 
 export default function Button({

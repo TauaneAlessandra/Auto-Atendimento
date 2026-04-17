@@ -9,7 +9,7 @@ export interface User {
   createdAt: string;
 }
 
-export interface ServiceType {
+export interface Category {
   id: number;
   name: string;
   active: boolean;
@@ -27,8 +27,8 @@ export interface Product {
   id: number;
   name: string;
   price: number;
-  serviceType: ServiceType;
-  serviceTypeId: number;
+  category: Category;
+  categoryId: number;
   description: string;
   unit: Unit;
   unitId: number;
@@ -40,7 +40,7 @@ export interface Product {
 }
 
 export type OrderStatus = 'pending' | 'approved' | 'rejected' | 'expired';
-export type WorkStatus = 'em_andamento' | 'concluido' | 'pausado';
+export type DeliveryStatus = 'em_andamento' | 'concluido' | 'pausado';
 
 export interface OrderItem {
   id: number;
@@ -56,11 +56,11 @@ export interface Order {
   id: number;
   clientName: string;
   phone: string;
-  manager: string;
-  costCenter: string;
+  responsible: string;
+  address: string;
   total: number;
   status: OrderStatus;
-  workStatus?: WorkStatus;
+  deliveryStatus?: DeliveryStatus;
   validUntil: string;
   approvedAt?: string;
   rejectedAt?: string;
@@ -80,6 +80,8 @@ export interface DashboardStats {
   rejectedOrders: number;
   ordersByDay: { date: string; count: number; value: number }[];
   ordersByMonth: { month: string; count: number; value: number }[];
+  recentOrders: Order[];
+  topProducts: { id: number; name: string; photo?: string; qty: number }[];
 }
 
 export interface CartItem {
@@ -92,4 +94,11 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+}
+
+export interface Message {
+  id: string;
+  sender: 'bot' | 'user';
+  text: string;
+  timestamp: Date | string;
 }

@@ -8,7 +8,8 @@ export const listUsers = async (_req: Request, res: Response): Promise<void> => 
   try {
     const users = await prisma.user.findMany({ select: SELECT_FIELDS, orderBy: { createdAt: 'desc' } });
     res.json(users);
-  } catch {
+  } catch (error) {
+    console.error('[users.listUsers]', error);
     res.status(500).json({ message: 'Erro ao listar usuários' });
   }
 };
@@ -25,7 +26,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({ data: { name, email, password: hashed, role }, select: SELECT_FIELDS });
     res.status(201).json(user);
-  } catch {
+  } catch (error) {
+    console.error('[users.createUser]', error);
     res.status(500).json({ message: 'Erro ao criar usuário' });
   }
 };
@@ -42,7 +44,8 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (password) data.password = await bcrypt.hash(password, 10);
     const user = await prisma.user.update({ where: { id: Number(id) }, data, select: SELECT_FIELDS });
     res.json(user);
-  } catch {
+  } catch (error) {
+    console.error('[users.updateUser]', error);
     res.status(500).json({ message: 'Erro ao atualizar usuário' });
   }
 };
@@ -52,7 +55,8 @@ export const removeUser = async (req: Request, res: Response): Promise<void> => 
     const { id } = req.params;
     await prisma.user.update({ where: { id: Number(id) }, data: { active: false } });
     res.json({ message: 'Usuário desativado com sucesso' });
-  } catch {
+  } catch (error) {
+    console.error('[users.removeUser]', error);
     res.status(500).json({ message: 'Erro ao remover usuário' });
   }
 };
