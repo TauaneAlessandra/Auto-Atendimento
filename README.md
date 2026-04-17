@@ -106,14 +106,6 @@ npm run dev
 
 ---
 
-## 🔑 Acesso Padrão (Administrador)
-
-| Campo | Credencial |
-| :--- | :--- |
-| **E-mail** | `admin@admin.com` |
-| **Senha** | `admin123` |
-
----
 
 ## 📂 Estrutura do Projeto
 
